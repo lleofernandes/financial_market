@@ -15,6 +15,11 @@ timezone = pytz.timezone('America/Sao_Paulo') #timezone local
 end_date = datetime.now(timezone)
 start_date = end_date - timedelta(days=7)
 
+# As datas de processamento para o arquivo CSV
+initial_date = datetime(2020, 1, 1) #data fixa iniciando em 2020-1-1
+final_date = datetime.now()
+
+
 timeframe = 'TIMEFRAME_M1'
 
 #Lista de ativos
@@ -27,7 +32,8 @@ def main():
         trader = custom_trader(file_path=file_path)
         
         # trader.update_ohlc(symbol='PETR3', timeframe='TIMEFRAME_M1')
-        trader.update_ohlc(ativos, timeframe, start_date, end_date, timezone)
+        trader.update_ohlc(ativos, timeframe, initial_date, final_date, timezone)
+        trader.update_ticks(ativos)
         
 
         # with open('credentials.json') as f:
