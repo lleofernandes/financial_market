@@ -101,3 +101,48 @@ class btoolsTrader():
 
         df.sort_values(by='time', ascending=False, inplace=True)
         df.to_csv(f"ohlc\\{timeframe_name}\\{symbol}_{timeframe_name}.csv", index=False)
+
+    def update_ticks(self, symbol):
+        initial_date = datetime(2020, 1, 1) #data fixa iniciando por 2020
+        final_date = datetime.now()
+
+        if not os.path.exists(f"ticks\\{symbol}_ticksrange.csv"):
+            df = pd.DateFrame(columns=['time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real'])
+        
+        else:
+            df = pd.read_csv(f"ticks\\{symbol}_ticksrange.csv")
+            df['time'] = pd.to_datetime(df['time'], unit='s')
+            if df['time'].max() < datetime.now() - timedelta(days=7):
+                initial_date = df['time'].max()
+        
+        ticks_data = mt5.copy_ticks_range(symbol, initial_date, final_date, mt5.COPY_TICKS_TRADE)
+        df_aux = pd.DataFrame(ticks_data)
+        df_aux['time'] = pd.to_datetime(df_aux['time'])
+        df = pd.concat([df_aux, df], ignore_index=True)
+        df['time'] = pd.to_datetime(df['time'])
+
+        df.sort_values(by='time', ascending=False, inplace=True)
+        df.to_csv(f"ticks\\{symbol}_ticksrange.csv", index=False)
+
+    def slice(self, type, symbol, initial_date, final_date, timeframe=None):
+        path = f'ohlc\\{timeframe}\\{symbol}_{timeframe}.csv' if type=='ohlc' else f'ticks\\{symbol}_ticksrage.csv'
+        if not os.path.exists(path):
+            print(f'O ativo {symbol} não está registrado, crie utilizando a função o .update_{type}')
+        else:
+            df = pd.read_csv(path)
+            df['time'] = pd.to_datetime(df['time'])
+            return df.loc[(df['time'] >= initial_date) & (df['time'] < final_date)]
+        pass
+        
+
+    def read_ohlc(self, symbol, timeframe, initial_date=datetime(2020, 1, 1), final_date=datetime.now()):
+        return self.slice('ohlc', symbol, initial_date, final_date, timeframe)
+        pass
+        
+
+    def read_ticks(self, symbol, initial_date=datetime(2020, 1, 1), final_date=datetime.now()):
+        return self.slice('ticks', symbol, initial_date, final_date)
+        pass
+        
+
+
