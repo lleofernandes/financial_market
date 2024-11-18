@@ -2,3 +2,6 @@
 .env
 credentials.json
 __pycache__
+ohlc
+ticks
+reports
