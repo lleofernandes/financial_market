@@ -6,7 +6,8 @@ import os
 
 from etl import proccess_ativos
 
-initial_date = datetime(2020, 1, 1) #data fixa iniciando em 2020-1-1
+current_year = datetime.now().year
+initial_date = datetime(current_year - 6, 1, 1) #data fixa dos ultimos 5 anos
 final_date = datetime.now()
 
 
@@ -87,14 +88,32 @@ class custom_trader():
         else:
             timeframe_path = f"ticks\\{symbol}_ticksrange.csv"
 
+        # Verifica se o arquivo já existe
         if os.path.exists(timeframe_path):
+             # Lê o arquivo CSV existente
             df_old = pd.read_csv(timeframe_path, parse_dates=['date_time'])
-            df = pd.concat([df, df_old], ignore_index=True)
-            df.drop_duplicates(subset=['date_time', 'symbol'], inplace=True)
 
-        df.sort_values(by='date_time', ascending=False, inplace=True)
-        df.to_csv(timeframe_path, index=False)
-        print(f"Dados atualizados para {symbol} no tipo {data_type}.")
+            # Encontra a última data registrada no arquivo existente
+            last_date_in_file = df_old['date_time'].max()
+
+            # Filtra os dados novos para incluir apenas os que são posteriores à última data no arquivo
+            df_new = df[df['date_time'] > last_date_in_file]
+            if not df_new.empty:
+                # Concatena os novos dados ao antigo
+                df_combined = pd.concat([df_old, df_new], ignore_index=True).drop_duplicates(subset=['date_time', 'symbol'], keep='last')
+                df_combined.sort_values(by='date_time', ascending=False, inplace=True)
+
+                # Atualiza o arquivo CSV com os dados combinados
+                df_combined.to_csv(timeframe_path, index=False)
+                print(f"Novos dados adicionados ao arquivo {timeframe_path} para {symbol} para op timeframe {timeframe}.")
+            else:
+                print(f"Não há novos dados para {symbol} após {last_date_in_file}.")
+
+        else:
+            # Se o arquivo não existir, cria o arquivo e escreve os dados
+            df.sort_values(by='date_time', ascending=False, inplace=True)
+            df.to_csv(timeframe_path, index=False)
+            print(f"Arquivo criado para {symbol} no tipo {data_type} para o timeframe {timeframe} no arquivo .csv.")
 
         
 
@@ -104,8 +123,9 @@ class custom_trader():
         Atualiza os dados OHLC para uma lista de ativos em um timeframe específico.
         """
 
-        start_date = start_date or initial_date
-        end_date = end_date or final_date
+        start_date = initial_date
+        end_date = final_date
+
 
         # Processa os ativos utilizando a função do ETL
         all_data = proccess_ativos(ativos, start_date, end_date, timezone)
@@ -113,110 +133,25 @@ class custom_trader():
         for df in all_data:
             symbol = df['symbol'].iloc[0]
             self._update_data(symbol, df, timeframe, data_type='ohlc')
-            # # timeframe_path = f"ohlc\\{timeframe}\\{symbol}_{timeframe}.csv"
-
-            # # Verifica se o arquivo já existe
-            # if os.path.exists(timeframe_path):
-            #     df_old = pd.read_csv(timeframe_path, parse_dates=['date_time'])
-            #     # df_old['date_time'] = pd.to_datetime(df_old['date_time'])
-            #     df = pd.concat([df, df_old], ignore_index=True)
-            #     df.drop_duplicates(subset=['date_time', 'symbol'], inplace=True)
-
-            #  # Ordena e salva o resultado
-            # df.sort_values(by='date_time', ascending=False, inplace=True)
-            # df.to_csv(timeframe_path, index=False)
-            # print(f"Dados atualizados para {symbol} no timeframe {timeframe}.")
-
-
-        # if not os.path.exists(f"ohlc\\{timeframe}\\{symbol}_{timeframe}.csv"):
-        #     df = pd.DataFrame(columns=['date_time', 'open', 'high', 'low', 'close', 'tick_volume', 'spread', 'real_volume'])
-        
-        # else:
-        #     df = pd.read_csv(f"ohlc\\{timeframe}\\{symbol}_{timeframe}.csv")
-        #     df['date_time'] = pd.to_datetime(df['date_time'])
-        #     if df['date_time'].max() < datetime.now() - timedelta(days=7):
-        #         initial_date = df['date_time'].max()
-        #     else: 
-        #         return
             
-        # timedelta_default = timedelta(days=self.timeframe_dict[timeframe][1])
-        # final_date_aux = initial_date + timedelta_default
-        # timeframe_name = timeframe
-        # timeframe = self.timeframe_dict[timeframe][0]
-
-        # dfs = []
-        # while True:
-        #     data_aux = mt5.copy_rates_range(symbol, timeframe, initial_date, min(final_date_aux, final_date))
-        #     if data_aux is not None:
-        #         df_aux = pd.DataFrame(data_aux)
-        #         df_aux['date_time'] = pd.to_datetime(df_aux['date_time'], unit='s')
-        #         dfs.append(df_aux)
-
-
-        #     if final_date_aux > final_date:
-        #         break
-            
-        #     # if data_aux is not None and len(data_aux) > 0:
-        #     initial_date = pd.to_datetime(data_aux['date_time'].max(), unit='s')
-        #     final_date_aux = initial_date + timedelta_default
-
-
-        # if not df_aux.empty:
-        #     df = pd.concat(dfs, ignore_index=True)
-
-        # df.sort_values(by='date_time', ascending=False, inplace=True)
-        # df.to_csv(f"ohlc\\{timeframe_name}\\{symbol}_{timeframe_name}.csv", index=False)
 
     def update_ticks(self, ativos, start_date=None, end_date=None, timezone=None):
         """
         Atualiza os dados TICKS para uma lista de ativos em um timeframe específico.
         """
-        start_date = start_date or initial_date
-        end_date = end_date or final_date
+        start_date = initial_date
+        end_date = final_date
 
         all_data = proccess_ativos(ativos, start_date, end_date, timezone)
 
         for df in all_data:
             symbol = df['symbol'].iloc[0]
             self._update_data(symbol, df, timeframe=None, data_type='ticks')
-            # timeframe_path = f"ticks\\{symbol}_ticksrange.csv"
-
-        #     # Verifica se o arquivo já existe
-        #     if os.path.exists(timeframe_path):
-        #         df_old = pd.read_csv(timeframe_path, parse_dates=['date_time'])
-        #         # df_old['date_time'] = pd.to_datetime(df_old['date_time'])
-        #         df = pd.concat([df, df_old], ignore_index=True)
-        #         df.drop_duplicates(subset=['date_time', 'symbol'], inplace=True)
-
-        #      # Ordena e salva o resultado
-        #     df.sort_values(by='date_time', ascending=False, inplace=True)
-        #     df.to_csv(timeframe_path, index=False)
-        #     print(f"Dados atualizados para {symbol}.")
-
-
-
-        # if not os.path.exists(f"ticks\\{symbol}_ticksrange.csv"):
-        #     df = pd.DataFrame(columns=['date_time', 'bid', 'ask', 'last', 'volume', 'time_msc', 'flags', 'volume_real'])
-        
-        # else:
-        #     df = pd.read_csv(f"ticks\\{symbol}_ticksrange.csv")
-        #     df['date_time'] = pd.to_datetime(df['date_time'])
-        #     if df['date_time'].max() < datetime.now() - timedelta(days=7):
-        #         initial_date = df['date_time'].max()
-        
-        # ticks_data = mt5.copy_ticks_range(symbol, initial_date, final_date, mt5.COPY_TICKS_TRADE)
-        # df_aux = pd.DataFrame(ticks_data)
-        # df_aux['date_time'] = pd.to_datetime(df_aux['date_time'])
-        # if not df_aux.empty:
-        #     df = pd.concat([df_aux, df], ignore_index=True)
-        # df['date_time'] = pd.to_datetime(df['date_time'])
-
-        # df.sort_values(by='date_time', ascending=False, inplace=True)
-        # df.to_csv(f"ticks\\{symbol}_ticksrange.csv", index=False)
+                   
 
     def slice(self, data_type, symbol, initial_date, final_date, timeframe=None):
         """Função genérica para ler os dados de OHLC ou Ticks de acordo com o tipo especificado."""
-        path = f'ohlc\\{timeframe}\\{symbol}_{timeframe}.csv' if type=='ohlc' else f'ticks\\{symbol}_ticksrage.csv'
+        path = f'ohlc\\{timeframe}\\{symbol}_{timeframe}.csv' if data_type=='ohlc' else f'ticks\\{symbol}_ticksrange.csv'
         
         if not os.path.exists(path):
             print(f'O ativo {symbol} não está registrado, crie utilizando a função o .update_{type}')
@@ -227,12 +162,12 @@ class custom_trader():
         
         
 
-    def read_ohlc(self, symbol, timeframe, initial_date=datetime(2020, 1, 1), final_date=datetime.now()):
+    def read_ohlc(self, symbol, timeframe, initial_date=initial_date, final_date=datetime.now()):
         return self.slice('ohlc', symbol, initial_date, final_date, timeframe)
         
         
 
-    def read_ticks(self, symbol, initial_date=datetime(2020, 1, 1), final_date=datetime.now()):
+    def read_ticks(self, symbol, initial_date=initial_date, final_date=datetime.now()):
         return self.slice('ticks', symbol, initial_date, final_date)
         
         

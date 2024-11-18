@@ -1,5 +1,7 @@
 import MetaTrader5 as mt5
 import pandas as pd
+import os
+
 
 
 def proccess_ativos(ativos, start_date, end_date, timezone):
@@ -16,7 +18,7 @@ def proccess_ativos(ativos, start_date, end_date, timezone):
             continue
 
         #obter os dados históricos do ativo
-        print(f"Buscando dados históricos para o ativo {ativo} de {start_date_format} a {end_date_format}")
+        print(f"Atualização de dados para o ativo {ativo} de {start_date_format} a {end_date_format} processados com sucesso")
         dataMT = mt5.copy_rates_range(ativo,
                                     mt5.TIMEFRAME_H1,
                                     start_date,
@@ -35,7 +37,7 @@ def proccess_ativos(ativos, start_date, end_date, timezone):
         # Processar os dados obtidos
         df = pd.DataFrame(dataMT)
         # print(f"Dados para o ativo {ativo} antes da conversão: \n{df.head()}")
-        df['time'] = pd.to_datetime(df['time'], unit='s') #converte a coluina 'time' de UNIX timestamp para datetime
+        df['time'] = pd.to_datetime(df['time'], unit='s') #converte a coluna 'time' de UNIX timestamp para datetime
         df.rename(columns={'time': 'date_time'}, inplace=True)
         df['date_time'] = pd.to_datetime(df['date_time'])
         
@@ -46,7 +48,8 @@ def proccess_ativos(ativos, start_date, end_date, timezone):
 
         # Adicionar os dados ao report consolidado
         all_data.append(df)
-        print(f"Dados para {ativo} processados com sucesso")
+        # print(f"Dados para {ativo} processados com sucesso")
     
     return all_data
+    
      

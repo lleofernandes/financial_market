@@ -6,57 +6,63 @@ from datetime import datetime, timedelta
 from graphics import create_graphics
 from reports import create_reports
 from etl import proccess_ativos
-
 from custom_class import custom_trader
 
 
 #Configuração de timezone e datas
 timezone = pytz.timezone('America/Sao_Paulo') #timezone local
-end_date = datetime.now(timezone)
-start_date = end_date - timedelta(days=7)
 
 # As datas de processamento para o arquivo CSV
-initial_date = datetime(2020, 1, 1) #data fixa iniciando em 2020-1-1
+current_year = datetime.now().year
+initial_date = datetime(current_year - 6, 1, 1) #data fixa dos ultimos 6 anos
 final_date = datetime.now()
 
 
-timeframe = 'TIMEFRAME_M1'
+# timeframe = 'TIMEFRAME_M1'
+
+timeframe_list = [
+    'TIMEFRAME_M1', 'TIMEFRAME_M2', 'TIMEFRAME_M3', 'TIMEFRAME_M4', 'TIMEFRAME_M5', 'TIMEFRAME_M6', 'TIMEFRAME_M10', 'TIMEFRAME_M12', 'TIMEFRAME_M15', 'TIMEFRAME_M20', 'TIMEFRAME_M30',
+    'TIMEFRAME_H1', 'TIMEFRAME_H2', 'TIMEFRAME_H3', 'TIMEFRAME_H4', 'TIMEFRAME_H6', 'TIMEFRAME_H8', 'TIMEFRAME_H12',
+    'TIMEFRAME_D1',
+    'TIMEFRAME_W1',
+    'TIMEFRAME_MN1'
+]  
+
 
 #Lista de ativos
-ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", ]
+ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", "PETR3"]
 
 
-def main():
+def main():    
+
     try:
+        end_date = datetime.now(timezone)
+        start_date = end_date - timedelta(days=7)
+
         file_path = os.path.join(os.getcwd(), 'credentials.json')
         trader = custom_trader(file_path=file_path)
         
-        # trader.update_ohlc(symbol='PETR3', timeframe='TIMEFRAME_M1')
-        trader.update_ohlc(ativos, timeframe, initial_date, final_date, timezone)
-        trader.update_ticks(ativos)
         
-
-        # with open('credentials.json') as f:
-        #     data = json.load(f)            
-
-        # #inicializa a aplicação e valida os dados de acesso
-        # if not mt5.initialize(login=data['mt_login'], password=data['mt_pswrd'], server=data['mt_server'], timeout=10000): #timeout é em milissegundos
-        # # if not mt5.initialize(login=data['mt_login'], password=data['mt_pswrd'], server=data['mt_server'], timeout=10000): #timeout é em milissegundos
-        #     print(f'initialize() failed, error code: {mt5.last_error()}')
-        #     mt5.shutdown()
-        #     raise SystemExit("Erro ao inicializar o MetaTrader 5. Verifique as credenciasis e o servidor.")
+        # Atualizando OHLC e Ticks para os ativos
+        for timeframe in timeframe_list:
+            print(f"Iniciando atualização de dados para o timeframe {timeframe}")
+            trader.update_ohlc(ativos, timeframe=timeframe, start_date=initial_date, end_date=final_date, timezone=timezone)
+            trader.update_ticks(ativos, start_date=initial_date, end_date=final_date, timezone=timezone)
+        
+        # Flag para indicar que a atualização de dados foi concluída
+        print("Atualização de dados concluída. Iniciando processamento de dados para ETL.")
         
         #Chama a funcao de ETL para processar os dados
-        all_data = proccess_ativos(ativos, start_date, end_date, timezone)
+        all_datas = proccess_ativos(ativos, start_date, end_date, timezone)
                                  
     
-        if all_data:
+        if all_datas:
             #GRAFICOS -------
-            fig = create_graphics(all_data, ativos)
+            fig = create_graphics(all_datas, ativos)
             fig.show()
 
             #REPORTS -------
-            create_reports(all_data)
+            create_reports(all_datas)
 
         else:
             print("Nenhum dado disponível para exportar")
