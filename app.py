@@ -20,24 +20,27 @@ final_date = datetime.now()
 
 # timeframe = 'TIMEFRAME_M1'
 
-timeframe_list = [
-    'TIMEFRAME_M1', 'TIMEFRAME_M2', 'TIMEFRAME_M3', 'TIMEFRAME_M4', 'TIMEFRAME_M5', 'TIMEFRAME_M6', 'TIMEFRAME_M10', 'TIMEFRAME_M12', 'TIMEFRAME_M15', 'TIMEFRAME_M20', 'TIMEFRAME_M30',
-    'TIMEFRAME_H1', 'TIMEFRAME_H2', 'TIMEFRAME_H3', 'TIMEFRAME_H4', 'TIMEFRAME_H6', 'TIMEFRAME_H8', 'TIMEFRAME_H12',
-    'TIMEFRAME_D1',
-    'TIMEFRAME_W1',
-    'TIMEFRAME_MN1'
-]  
+timeframe_list = ['TIMEFRAME_H1',]
+
+# timeframe_list = [
+#     'TIMEFRAME_M1', 'TIMEFRAME_M2', 'TIMEFRAME_M3', 'TIMEFRAME_M4', 'TIMEFRAME_M5', 'TIMEFRAME_M6', 'TIMEFRAME_M10', 'TIMEFRAME_M12', 'TIMEFRAME_M15', 'TIMEFRAME_M20', 'TIMEFRAME_M30',
+#     'TIMEFRAME_H1', 'TIMEFRAME_H2', 'TIMEFRAME_H3', 'TIMEFRAME_H4', 'TIMEFRAME_H6', 'TIMEFRAME_H8', 'TIMEFRAME_H12',
+#     'TIMEFRAME_D1',
+#     'TIMEFRAME_W1',
+#     'TIMEFRAME_MN1'
+# ]  
 
 
 #Lista de ativos
-ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", "PETR3"]
+ativos = ["MXRF11",]
+# ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", "PETR3"]
 
 
 def main():    
 
     try:
         end_date = datetime.now(timezone)
-        start_date = end_date - timedelta(days=7)
+        start_date = end_date - timedelta(days=3600)
 
         file_path = os.path.join(os.getcwd(), 'credentials.json')
         trader = custom_trader(file_path=file_path)
@@ -53,16 +56,16 @@ def main():
         print("Atualização de dados concluída. Iniciando processamento de dados para ETL.")
         
         #Chama a funcao de ETL para processar os dados
-        all_datas = proccess_ativos(ativos, start_date, end_date, timezone)
+        all_data = proccess_ativos(ativos, start_date, end_date, timezone)
                                  
     
-        if all_datas:
+        if all_data:
             #GRAFICOS -------
-            fig = create_graphics(all_datas, ativos)
-            fig.show()
+            fig = create_graphics(all_data, ativos)
+            # fig.show()
 
             #REPORTS -------
-            create_reports(all_datas)
+            create_reports(all_data)
 
         else:
             print("Nenhum dado disponível para exportar")

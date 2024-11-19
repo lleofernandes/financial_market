@@ -116,7 +116,6 @@ class custom_trader():
             print(f"Arquivo criado para {symbol} no tipo {data_type} para o timeframe {timeframe} no arquivo .csv.")
 
         
-
     # funcoes ================
     def update_ohlc(self, ativos, timeframe, start_date=None, end_date=None, timezone=None):
         """
@@ -147,7 +146,7 @@ class custom_trader():
         for df in all_data:
             symbol = df['symbol'].iloc[0]
             self._update_data(symbol, df, timeframe=None, data_type='ticks')
-                   
+         
 
     def slice(self, data_type, symbol, initial_date, final_date, timeframe=None):
         """Função genérica para ler os dados de OHLC ou Ticks de acordo com o tipo especificado."""
@@ -159,13 +158,11 @@ class custom_trader():
             df = pd.read_csv(path)
             df['date_time'] = pd.to_datetime(df['date_time'])
             return df.loc[(df['date_time'] >= initial_date) & (df['date_time'] < final_date)]
-        
-        
+            
 
     def read_ohlc(self, symbol, timeframe, initial_date=initial_date, final_date=datetime.now()):
         return self.slice('ohlc', symbol, initial_date, final_date, timeframe)
-        
-        
+              
 
     def read_ticks(self, symbol, initial_date=initial_date, final_date=datetime.now()):
         return self.slice('ticks', symbol, initial_date, final_date)
