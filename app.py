@@ -32,15 +32,15 @@ timeframe_list = ['TIMEFRAME_H1',]
 
 
 #Lista de ativos
-ativos = ["MXRF11",]
-# ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", "PETR3"]
+# ativos = ["MXRF11",]
+ativos = ["AIEC11", "BTLG11", "MXRF11", "XPML11", "PETR3"]
 
 
 def main():    
 
     try:
         end_date = datetime.now(timezone)
-        start_date = end_date - timedelta(days=3600)
+        start_date = end_date - timedelta(days=30)
 
         file_path = os.path.join(os.getcwd(), 'credentials.json')
         trader = custom_trader(file_path=file_path)
@@ -62,7 +62,7 @@ def main():
         if all_data:
             #GRAFICOS -------
             fig = create_graphics(all_data, ativos)
-            # fig.show()
+            fig.show()
 
             #REPORTS -------
             create_reports(all_data)
